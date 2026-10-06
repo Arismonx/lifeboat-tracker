@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>This Ship Is About to Sink - Lifeboat Log</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter & Kanit (for Thai UI) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Kanit', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        marine: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        lifeboat: {
+                            500: '#f97316',
+                            600: '#ea580c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            /* Sea gradient background */
+            background: linear-gradient(135deg, #0f172a 0%, #0c4a6e 50%, #082f49 100%);
+            background-attachment: fixed;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .heart-icon {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+        
+        .heart-icon:active {
+            transform: scale(0.8);
+        }
+
+        .heart-active {
+            color: #ef4444; /* Red */
+            fill: #ef4444;
+        }
+
+        .heart-inactive {
+            color: #d1d5db; /* Gray */
+            fill: transparent;
+        }
+
+        .usage-dot {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .usage-dot.active {
+            background-color: #f97316; /* Lifeboat orange */
+            border-color: #ea580c;
+        }
+        
+        /* Custom scrollbar for dropdowns */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1em;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex items-center justify-center text-slate-800">
+
+    <main class="glass-panel w-full max-w-md rounded-3xl overflow-hidden relative">
+        
+        <!-- Header -->
+        <header class="bg-marine-900 text-white p-6 text-center relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white to-transparent"></div>
+            <h1 class="text-2xl font-bold tracking-wide relative z-10">THIS SHIP IS</h1>
+            <h1 class="text-2xl font-bold tracking-wide text-lifeboat-500 relative z-10">ABOUT TO SINK</h1>
+            <p class="text-marine-100 text-sm mt-1 opacity-80 relative z-10">ใบบันทึกประจำเรือชูชีพ</p>
+        </header>
+
+        <div class="p-6 space-y-6">
+            
+            <!-- Team Name Input -->
+            <div>
+                <label for="teamName" class="block text-sm font-semibold text-slate-600 mb-2">ชื่อเรือชูชีพ / ชื่อกลุ่ม</label>
+                <input type="text" id="teamName" placeholder="ระบุชื่อกลุ่มของคุณ..." 
+                    class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-marine-500 focus:border-transparent transition-all">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <!-- HP Tracker -->
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex flex-col items-center justify-center shadow-sm">
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">พลังชีวิต (HP)</span>
+                    <div class="flex space-x-1" id="hpContainer">
+                        <!-- Hearts injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Food Tracker -->
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex flex-col items-center justify-center shadow-sm">
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">เสบียงอาหาร</span>
+                    <div class="flex items-center space-x-3">
+                        <button id="btnFoodMinus" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 active:bg-slate-400 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+                        <span id="foodCount" class="text-2xl font-bold text-slate-800 w-8 text-center">0</span>
+                        <button id="btnFoodPlus" class="w-8 h-8 flex items-center justify-center rounded-full bg-marine-100 text-marine-800 hover:bg-marine-200 active:bg-marine-300 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory Section -->
+            <div>
+                <div class="flex justify-between items-end mb-3">
+                    <label class="block text-sm font-semibold text-slate-600">ไอเทม 5 ชิ้น</label>
+                    <span class="text-xs text-slate-400">กดที่วงกลมเพื่อใช้งาน</span>
+                </div>
+                
+                <div class="space-y-3" id="inventoryContainer">
+                    <!-- Inventory slots injected by JS -->
+                </div>
+            </div>
+            
+            <!-- Action Button -->
+            <div class="pt-4 border-t border-slate-100">
+                <button id="btnResetRequest" class="w-full py-3 rounded-xl bg-slate-100 text-slate-500 font-medium hover:bg-red-50 hover:text-red-500 transition-colors flex items-center justify-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                    <span>รีเซ็ตข้อมูลเกมใหม่</span>
+                </button>
+            </div>
+            
+        </div>
+    </main>
+
+    <!-- Custom Confirm Modal -->
+    <div id="resetModal" class="fixed inset-0 z-50 flex items-center justify-center px-4 hidden">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" id="modalBackdrop"></div>
+        
+        <!-- Dialog -->
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden z-10 transform scale-95 opacity-0 transition-all duration-200" id="modalDialog">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 mb-2">ยืนยันการรีเซ็ต?</h3>
+                <p class="text-slate-500 text-sm mb-6">ข้อมูลพลังชีวิต, เสบียง และไอเทมทั้งหมดของกลุ่มจะถูกลบและเริ่มใหม่ คุณแน่ใจหรือไม่?</p>
+                <div class="flex space-x-3">
+                    <button id="btnModalCancel" class="flex-1 py-3 bg-slate-100 text-slate-700 font-medium rounded-xl hover:bg-slate-200 transition-colors">ยกเลิก</button>
+                    <button id="btnModalConfirm" class="flex-1 py-3 bg-red-500 text-white font-medium rounded-xl hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30">ยืนยันลบ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Constants & Initial State
+        const STORAGE_KEY = 'shipwreck_game_state';
+        const AVAILABLE_ITEMS = [
+            "ยังไม่ได้เลือก...",
+            "อาหาร", 
+            "กล่องพยาบาล", 
+            "เทป", 
+            "ถัง", 
+            "ไฟฉาย", 
+            "ร่ม", 
+            "สมอเรือ", 
+            "ห่วงยาง", 
+            "แห",
+            "ปืนฉมวก"
+        ];
+
+        const DEFAULT_STATE = {
+            teamName: "",
+            hp: [true, true, true], // 3 Hearts, all full initially
+            food: 0,
+            items: Array.from({ length: 5 }, () => ({ name: "", usages: [false, false] }))
+        };
+
+        let gameState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+
+        // Elements
+        const DOM = {
+            teamName: document.getElementById('teamName'),
+            hpContainer: document.getElementById('hpContainer'),
+            foodCount: document.getElementById('foodCount'),
+            btnFoodPlus: document.getElementById('btnFoodPlus'),
+            btnFoodMinus: document.getElementById('btnFoodMinus'),
+            inventoryContainer: document.getElementById('inventoryContainer'),
+            btnResetRequest: document.getElementById('btnResetRequest'),
+            resetModal: document.getElementById('resetModal'),
+            modalDialog: document.getElementById('modalDialog'),
+            modalBackdrop: document.getElementById('modalBackdrop'),
+            btnModalCancel: document.getElementById('btnModalCancel'),
+            btnModalConfirm: document.getElementById('btnModalConfirm')
+        };
+
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    gameState = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.error("Failed to load state", e);
+            }
+            renderAll();
+        }
+
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+        }
+
+        function renderAll() {
+            DOM.teamName.value = gameState.teamName;
+            renderHP();
+            renderFood();
+            renderInventory();
+        }
+
+        function renderHP() {
+            DOM.hpContainer.innerHTML = '';
+            gameState.hp.forEach((isFull, index) => {
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svg.setAttribute("viewBox", "0 0 24 24");
+                svg.setAttribute("width", "36");
+                svg.setAttribute("height", "36");
+                svg.setAttribute("stroke", "currentColor");
+                svg.setAttribute("stroke-width", "2");
+                svg.setAttribute("stroke-linecap", "round");
+                svg.setAttribute("stroke-linejoin", "round");
+                svg.classList.add("heart-icon");
+                svg.classList.add(isFull ? "heart-active" : "heart-inactive");
+                
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z");
+                svg.appendChild(path);
+
+                // Toggle HP on click
+                svg.addEventListener('click', () => {
+                    gameState.hp[index] = !gameState.hp[index];
+                    saveState();
+                    renderHP();
+                });
+
+                DOM.hpContainer.appendChild(svg);
+            });
+        }
+
+        function renderFood() {
+            DOM.foodCount.textContent = gameState.food;
+        }
+
+        function renderInventory() {
+            DOM.inventoryContainer.innerHTML = '';
+            
+            gameState.items.forEach((slot, slotIndex) => {
+                const row = document.createElement('div');
+                row.className = "flex items-center space-x-3 bg-slate-50 p-2 rounded-xl border border-slate-100";
+
+                // Slot Number Indicator
+                const numBadge = document.createElement('div');
+                numBadge.className = "w-6 h-6 rounded-full bg-marine-100 text-marine-800 flex items-center justify-center text-xs font-bold shrink-0";
+                numBadge.textContent = slotIndex + 1;
+                
+                // Dropdown
+                const select = document.createElement('select');
+                select.className = "flex-1 bg-white border border-slate-200 text-slate-700 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marine-500 font-sans";
+                
+                AVAILABLE_ITEMS.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item === "ยังไม่ได้เลือก..." ? "" : item;
+                    option.textContent = item;
+                    if (slot.name === option.value) option.selected = true;
+                    select.appendChild(option);
+                });
+
+                select.addEventListener('change', (e) => {
+                    gameState.items[slotIndex].name = e.target.value;
+                    // Reset usages when changing item
+                    gameState.items[slotIndex].usages = [false, false]; 
+                    saveState();
+                    renderInventory(); // Re-render to clear dots
+                });
+
+                // Usages (2 dots)
+                const dotsContainer = document.createElement('div');
+                dotsContainer.className = "flex space-x-2 shrink-0 pr-1";
+                
+                slot.usages.forEach((isUsed, useIndex) => {
+                    const dot = document.createElement('div');
+                    dot.className = `usage-dot w-6 h-6 rounded-full border-2 flex items-center justify-center ${isUsed ? 'active' : 'border-slate-300 bg-white hover:border-slate-400'}`;
+                    
+                    // Add checkmark if active
+                    if (isUsed) {
+                        dot.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                    }
+
+                    dot.addEventListener('click', () => {
+                        // Only allow clicking if an item is selected
+                        if (!gameState.items[slotIndex].name) return;
+                        
+                        gameState.items[slotIndex].usages[useIndex] = !isUsed;
+                        saveState();
+                        renderInventory();
+                    });
+                    
+                    dotsContainer.appendChild(dot);
+                });
+
+                row.appendChild(numBadge);
+                row.appendChild(select);
+                row.appendChild(dotsContainer);
+                DOM.inventoryContainer.appendChild(row);
+            });
+        }
+
+        
+        // Team Name
+        DOM.teamName.addEventListener('input', (e) => {
+            gameState.teamName = e.target.value;
+            saveState();
+        });
+
+        // Food controls
+        DOM.btnFoodPlus.addEventListener('click', () => {
+            gameState.food++;
+            saveState();
+            renderFood();
+        });
+
+        DOM.btnFoodMinus.addEventListener('click', () => {
+            if (gameState.food > 0) {
+                gameState.food--;
+                saveState();
+                renderFood();
+            }
+        });
+
+        // Reset Modal Logic
+        function openModal() {
+            DOM.resetModal.classList.remove('hidden');
+            // Trigger animation frame for CSS transition
+            requestAnimationFrame(() => {
+                DOM.modalDialog.classList.remove('scale-95', 'opacity-0');
+                DOM.modalDialog.classList.add('scale-100', 'opacity-100');
+            });
+        }
+
+        function closeModal() {
+            DOM.modalDialog.classList.remove('scale-100', 'opacity-100');
+            DOM.modalDialog.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                DOM.resetModal.classList.add('hidden');
+            }, 200); // Wait for transition
+        }
+
+        DOM.btnResetRequest.addEventListener('click', openModal);
+        DOM.btnModalCancel.addEventListener('click', closeModal);
+        DOM.modalBackdrop.addEventListener('click', closeModal);
+
+        DOM.btnModalConfirm.addEventListener('click', () => {
+            // Reset to default
+            gameState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+            saveState();
+            renderAll();
+            closeModal();
+        });
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            loadState();
+        });
+
+    </script>
+</body>
+</html>
